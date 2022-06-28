@@ -128,6 +128,10 @@ int main(void)
 	if (!glfwInit())
 		return -1;
 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	/* setting OpenGL profile to be CORE*/
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
@@ -160,6 +164,11 @@ int main(void)
 		0 , 1 , 2,
 		2 , 3 , 0
 	};
+
+	// VERTEX ARRAY OBJECT
+	unsigned int vao;
+	GLCall(glGenVertexArrays(1,&vao));
+	GLCall(glBindVertexArray(vao));
 
 	unsigned int buffer;
 	// generates VERTEX BUFFER 
