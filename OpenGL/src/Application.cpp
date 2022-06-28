@@ -128,6 +128,10 @@ int main(void)
 	if (!glfwInit())
 		return -1;
 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	/* setting OpenGL profile to be CORE*/
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	/* Create a windowed mode window and its OpenGL context */
 	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
@@ -160,6 +164,11 @@ int main(void)
 		0 , 1 , 2,
 		2 , 3 , 0
 	};
+
+	// VERTEX ARRAY OBJECT
+	unsigned int vao;
+	GLCall(glGenVertexArrays(1,&vao));
+	GLCall(glBindVertexArray(vao));
 
 	unsigned int buffer;
 	// generates VERTEX BUFFER 
@@ -201,6 +210,17 @@ int main(void)
 	float rChannel = 0.5;
 	float delta = 0.05;
 
+
+	/* ----- HERE ------- clearing all GL states 
+	 so that we may change these states inside the loop
+	*/
+	GLCall(glBindVertexArray(0));
+	GLCall(glUseProgram(0));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+	/*-------------------------------------------*/
+
+
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window))
 	{
@@ -215,8 +235,21 @@ int main(void)
 			glVertex2d(0.5f, -0.5f);
 			glEnd();
 		*/
-
 		/* using Modern OpenGL */
+
+		// binding shader
+		GLCall(glUseProgram(shader));
+		GLCall(glUniform4f(location, rChannel, 0.0, 0.5, 1.0));
+
+		// binding VAO
+		GLCall(glBindVertexArray(vao));
+
+		// binding index buffer
+		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ibo));
+
+		//this is the draw call
+		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+
 
 		if (rChannel < 0)
 			delta = 0.05;
@@ -224,12 +257,6 @@ int main(void)
 			delta = -0.05;
 
 		rChannel += delta;
-
-		GLCall(glUniform4f(location, rChannel, 0.0,0.5,1.0));
-
-
-		//this is the draw call
-		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0)); 
 
 		/* Swap front and back buffers */
 		GLCall(glfwSwapBuffers(window));
