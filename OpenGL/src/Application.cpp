@@ -6,12 +6,15 @@
 #include <string>
 #include <sstream>
 
+#include "ErrorHandling.h"
+
 #include "Renderer.h"
 
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "Texture.h"
 
 int main(void)
 {
@@ -47,10 +50,10 @@ int main(void)
 	{
 
 		float positions[] = {
-			-0.5f, -0.5f, //0
-			-0.5f,  0.5f, //1
-			 0.5f,  0.5f, //2
-			 0.5f, -0.5f  //3
+			-0.5f, -0.5f, 0.0f, 0.0f, //0
+			-0.5f,  0.5f, 0.0f, 1.0f, //1
+			 0.5f,  0.5f, 1.0f, 1.0f, //2
+			 0.5f, -0.5f, 1.0f, 0.0f  //3
 		};
 
 		// indices need to be unsigned
@@ -59,16 +62,20 @@ int main(void)
 			2 , 3 , 0
 		};
 
+		// handling blending
+		GLCall(glEnable(GL_BLEND));
+		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
 		// VERTEX ARRAY OBJECT
 		VertexArray va;
 
 		// creating vertex buffer using the VertexBuffer class
-		VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+		VertexBuffer vb(positions, 4 * 4 * sizeof(float));
 
 		// vertex buffer layout .. to interpret the data in vertex buffer
 		VertexBufferLayout layout;
 		layout.Push<float>(2); // 2 is the count of floats that are considered 1 vertex
-
+		layout.Push<float>(2); // this is for the texture coordinates
 		// adding and binding vb to va
 		va.AddBuffer(vb, layout);
 		
@@ -80,9 +87,12 @@ int main(void)
 
 		// Load Shader
 		Shader shader(filepath);
+		shader.Bind();
 
-		float rChannel = 0.5;
-		float delta = 0.05;
+		// Texture
+		Texture texture("resources/textures/duck.png");
+		texture.Bind();
+		shader.SetUniform1i("u_Texture",0);
 
 		/* ----- HERE ------- clearing all GL states */
 		va.Unbind();
@@ -91,35 +101,15 @@ int main(void)
 		shader.Unbind();
 		/*-------------------------------------------*/
 
+		Renderer renderer;
 
 		/* Loop until the user closes the window */
 		while (!glfwWindowShouldClose(window))
 		{
 			/* Render here */
-			GLCall(glClear(GL_COLOR_BUFFER_BIT));
+			renderer.Clear();
 
-			// binding shader
-			shader.Bind();	
-
-			// set uniforms
-			shader.SetUnfiorm4f("u_Color", rChannel, 0.0, 0.5, 1.0);
-
-			// binding VAO
-			va.Bind(); 
-
-			// binding index buffer
-			ib.Bind();
-
-			// draw call
-			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-
-
-			if (rChannel < 0)
-				delta = 0.05;
-			else if (rChannel > 1)
-				delta = -0.05;
-
-			rChannel += delta;
+			renderer.Draw(va, ib, shader);
 
 			/* Swap front and back buffers */
 			GLCall(glfwSwapBuffers(window));
