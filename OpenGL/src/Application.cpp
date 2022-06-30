@@ -16,6 +16,9 @@
 #include "Shader.h"
 #include "Texture.h"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 int main(void)
 {
 	GLFWwindow* window;
@@ -30,7 +33,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+	window = glfwCreateWindow(640, 640, "quack", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -82,12 +85,23 @@ int main(void)
 		// creating index buffer using IndexBuffer class
 		IndexBuffer ib(indices, 6);
 
+		/* MVP matrices */
+		glm::mat4 projection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+
+		// create identity matrix and translate it .. or rotate or scale
+		glm::mat4 view = glm::translate(glm::mat4 (1.0f),glm::vec3(-0.3f,0,0));
+
+		glm::mat4 model = glm::translate(glm::mat4 (1.0f), glm::vec3(0.1f,0.6f,0));
+
+		glm::mat4 mvp = projection * view * model; // multiplied in this order since OpenGL is column major
+
 		// the actual shader in string format -- written in GLSL (OpenGL Shading Language)
 		const std::string filepath = "resources/shaders/basic.shader";
 
 		// Load Shader
 		Shader shader(filepath);
 		shader.Bind();
+		shader.SetUniformMat4f("u_MVP",mvp);
 
 		// Texture
 		Texture texture("resources/textures/duck.png");
